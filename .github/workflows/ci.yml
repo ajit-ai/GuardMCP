@@ -7,26 +7,44 @@ on:
     branches: [main, develop]
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        python-version: ["3.11", "3.12"]
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npx vitest run
-      - name: Smoke test server starts
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install (uv)
         run: |
-          timeout 5 node dist/index.js 2> /tmp/guardmcp.log || true
-          cat /tmp/guardmcp.log
-          grep -q "Server running on stdio" /tmp/guardmcp.log
-      - name: Verify MCP list_tools
-        run: |
-          echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/index.js 2>/dev/null | grep -q "check_cve"
+          pip install uv
+          uv pip install --system -e ".[dev]"
+          uv pip install --system -e ./packages/guardmcp-core
+          uv pip install --system -e ./packages/guardmcp-context
+          uv pip install --system -e ./packages/guardmcp-errors
+          uv pip install --system -e ./packages/guardmcp-policy
+          uv pip install --system -e ./packages/guardmcp-risk
+          uv pip install --system -e ./packages/guardmcp-budget
+          uv pip install --system -e ./packages/guardmcp-decision
+          uv pip install --system -e ./packages/guardmcp-audit
+          uv pip install --system -e ./packages/guardmcp-observability
+          uv pip install --system -e ./packages/guardmcp-security
+          uv pip install --system -e ./packages/guardmcp-proxy
+
+      - name: Format check
+        run: ruff format --check .
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Typecheck
+        run: mypy packages
+
+      - name: Tests
+        run: pytest -q
