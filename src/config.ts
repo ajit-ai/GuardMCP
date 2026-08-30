@@ -27,5 +27,6 @@ export const config = {
     enabled: process.env.AUDIT_LOG_ENABLED !== "false",
     path: process.env.AUDIT_LOG_PATH || "./logs/audit.log",
   },
+  redisUrl: process.env.REDIS_URL || "",
   logLevel: process.env.LOG_LEVEL || "info",
 };

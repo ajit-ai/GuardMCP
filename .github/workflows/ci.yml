@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npx vitest run
+      - name: Smoke test server starts
+        run: |
+          timeout 5 node dist/index.js 2> /tmp/guardmcp.log || true
+          cat /tmp/guardmcp.log
+          grep -q "Server running on stdio" /tmp/guardmcp.log
+      - name: Verify MCP list_tools
+        run: |
+          echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node dist/index.js 2>/dev/null | grep -q "check_cve"

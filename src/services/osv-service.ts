@@ -54,13 +54,21 @@ export async function queryOsv(
     version,
   });
 
-  const res = await fetch(config.osv.baseUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
+  let res: Response;
+  try {
+    res = await fetch(config.osv.baseUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+  } catch (err) {
+    throw new Error(`OSV network error: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
-  if (!res.ok) throw new Error(`OSV API error ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    if (res.status === 429) throw new Error(`OSV rate limited (429) — retry later`);
+    throw new Error(`OSV API error ${res.status}: ${await res.text()}`);
+  }
 
   const json = (await res.json()) as OsvQueryResponse;
   const vulns = (json.vulns || []).map(mapOsvToVuln);
@@ -94,13 +102,23 @@ export async function queryOsvBatch(
     })),
   });
 
-  const res = await fetch(config.osv.batchUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
+  let resBatch: Response;
+  try {
+    resBatch = await fetch(config.osv.batchUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+  } catch (err) {
+    throw new Error(`OSV batch network error: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
-  if (!res.ok) throw new Error(`OSV batch error ${res.status}: ${await res.text()}`);
+  const res = resBatch;
+
+  if (!res.ok) {
+    if (res.status === 429) throw new Error(`OSV batch rate limited (429) — retry later`);
+    throw new Error(`OSV batch error ${res.status}: ${await res.text()}`);
+  }
 
   const json = (await res.json()) as { results: OsvQueryResponse[] };
   json.results.forEach((r, i) => {

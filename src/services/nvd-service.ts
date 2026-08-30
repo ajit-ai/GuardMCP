@@ -74,21 +74,44 @@ export async function fetchCveFromNvd(cveId: string): Promise<{ data: CveResult 
   const headers: Record<string, string> = { Accept: "application/json" };
   if (config.nvd.apiKey) headers["apiKey"] = config.nvd.apiKey;
 
-  const res = await fetch(url, { headers });
-  if (!res.ok) {
-    if (res.status === 404) {
-      cveCache.set(key, null);
-      return { data: null, cacheHit: false };
+  // Retry on 429 with exponential backoff
+  const maxRetries = 3;
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await fetch(url, { headers });
+      if (res.status === 429) {
+        if (attempt >= maxRetries) throw new Error(`NVD rate limit exceeded after ${maxRetries} retries (429)`);
+        const retryAfter = parseInt(res.headers.get("Retry-After") || "30", 10);
+        const backoff = Math.min(retryAfter * 1000 || 30000, 30000) + attempt * 5000;
+        console.error(`[nvd] 429 rate limited, retrying in ${backoff}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise((r) => setTimeout(r, backoff));
+        attempt++;
+        await limiter.acquire();
+        continue;
+      }
+      if (!res.ok) {
+        if (res.status === 404) {
+          cveCache.set(key, null);
+          return { data: null, cacheHit: false };
+        }
+        throw new Error(`NVD API error ${res.status}: ${await res.text()}`);
+      }
+      const json = (await res.json()) as NvdResponse;
+      const vuln = json.vulnerabilities?.[0];
+      const result = vuln ? parseNvdToCve(vuln) : null;
+      cveCache.set(key, result);
+      return { data: result, cacheHit: false };
+    } catch (err) {
+      // Network errors: retry once
+      if (err instanceof TypeError && attempt < 1) {
+        attempt++;
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      throw err;
     }
-    throw new Error(`NVD API error ${res.status}: ${await res.text()}`);
   }
-
-  const json = (await res.json()) as NvdResponse;
-  const vuln = json.vulnerabilities?.[0];
-  const result = vuln ? parseNvdToCve(vuln) : null;
-
-  cveCache.set(key, result);
-  return { data: result, cacheHit: false };
 }
 
 export async function searchNvdByKeyword(
@@ -105,11 +128,33 @@ export async function searchNvdByKeyword(
   const headers: Record<string, string> = { Accept: "application/json" };
   if (config.nvd.apiKey) headers["apiKey"] = config.nvd.apiKey;
 
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`NVD search error ${res.status}: ${await res.text()}`);
-
-  const json = (await res.json()) as NvdResponse;
-  const results = (json.vulnerabilities || []).map(parseNvdToCve);
-  cveCache.set(key, results);
-  return { data: results, cacheHit: false };
+  const maxRetries = 3;
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await fetch(url, { headers });
+      if (res.status === 429) {
+        if (attempt >= maxRetries) throw new Error(`NVD search rate limit exceeded after ${maxRetries} retries`);
+        const retryAfter = parseInt(res.headers.get("Retry-After") || "30", 10);
+        const backoff = Math.min(retryAfter * 1000 || 30000, 30000) + attempt * 5000;
+        console.error(`[nvd] 429 on search, retrying in ${backoff}ms`);
+        await new Promise((r) => setTimeout(r, backoff));
+        attempt++;
+        await limiter.acquire();
+        continue;
+      }
+      if (!res.ok) throw new Error(`NVD search error ${res.status}: ${await res.text()}`);
+      const json = (await res.json()) as NvdResponse;
+      const results = (json.vulnerabilities || []).map(parseNvdToCve);
+      cveCache.set(key, results);
+      return { data: results, cacheHit: false };
+    } catch (err) {
+      if (err instanceof TypeError && attempt < 1) {
+        attempt++;
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      throw err;
+    }
+  }
 }
