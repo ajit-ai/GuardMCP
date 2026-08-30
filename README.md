@@ -41,7 +41,7 @@ guardmcp/
 
 See `docs/architecture/OVERVIEW.md` and `docs/adr/`.
 
-## Quick Start (G0-G1)
+## Quick Start (G0-G3)
 
 ```bash
 # install
@@ -66,7 +66,7 @@ Requires Python 3.11+.
 
 `G0` Repository Foundation → `G1` Core Domain → `G2` Errors → `G3` Policy → `G4` Risk → `G5` Budget → `G6` Decision → `G7` Audit → `G8` MCP Proxy → `G9` Post-Execution → `G10` Security Intelligence → `G11` Observability → `G12` Persistence → `G13` Hardening → `G14` DX → `G15` Release
 
-Current: **G2 complete** — `GuardError` (13 categories, severity, retryable, trace_id) stable + `GuardContext` family, 26 unit tests, mypy strict, no infra deps. Awaiting `Proceed to G3`.
+Current: **G3 complete** — `Policy→Rule→Condition` engine with `PolicyEvaluator` supporting 5 actions (ALLOW/DENY/RESTRICT/APPROVAL_REQUIRED/SANDBOX) and 10 GuardContext inputs, precedence, 35 unit tests, mypy strict, no MCP transport deps. Awaiting `Proceed to G4`.
 
 ## Documentation
 

@@ -10,7 +10,7 @@ GuardError(
     category=ErrorCategory.POLICY,
     severity=ErrorSeverity.HIGH,
     retryable=False,
-    message="policy denied",   # user-facing, no secrets
+    message="policy denied",  # user-facing, no secrets
     reason="rule matched",
     trace_id="uuid",
     timestamp=datetime.now(timezone.utc),
