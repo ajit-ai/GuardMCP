@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "guardmcp-risk"
+version = "0.1.0"
+description = "GuardMCP guardmcp-risk � placeholder"
+requires-python = ">=3.11"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/guardmcp_risk"]
+

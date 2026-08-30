@@ -1,8 +1,38 @@
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+*.egg
 dist/
-logs/
+build/
+.venv/
+venv/
+env/
 .env
-*.log
-coverage/
+.conda/
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
+Thumbs.db
+
+# Project
+logs/
+*.log
+.secrets/
