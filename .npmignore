@@ -1,0 +1,14 @@
+src/
+tests/
+.env
+.env.example
+.gitignore
+.github/
+logs/
+coverage/
+.vscode/
+*.log
+tsconfig.json
+scripts/
+installer/
+sea-config.json

@@ -29,13 +29,19 @@ export async function fetchGitHubAdvisory(
 
   // GitHub Advisory by CVE: search advisories
   const url = `${config.github.baseUrl}?cve_id=${encodeURIComponent(cveId)}`;
-  const res = await fetch(url, { headers });
+  let res: Response;
+  try {
+    res = await fetch(url, { headers });
+  } catch (err) {
+    throw new Error(`GitHub network error: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
   if (!res.ok) {
     if (res.status === 404 || res.status === 403) {
       cveCache.set(key, null);
       return { data: null, cacheHit: false };
     }
+    if (res.status === 429) throw new Error(`GitHub Advisory rate limited (429) — retry later`);
     throw new Error(`GitHub Advisory error ${res.status}: ${await res.text()}`);
   }
 
@@ -59,8 +65,17 @@ export async function searchGitHubAdvisories(
   let url = `${config.github.baseUrl}?per_page=20`;
   if (ecosystem) url += `&ecosystem=${encodeURIComponent(ecosystem)}`;
 
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`GitHub Advisory search error ${res.status}`);
+  let res2: Response;
+  try {
+    res2 = await fetch(url, { headers });
+  } catch (err) {
+    throw new Error(`GitHub search network error: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  const res = res2;
+  if (!res.ok) {
+    if (res.status === 429) throw new Error(`GitHub search rate limited (429)`);
+    throw new Error(`GitHub Advisory search error ${res.status}`);
+  }
 
   const data = (await res.json()) as GhAdvisory[];
   if (!keyword) return data;
