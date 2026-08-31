@@ -5,9 +5,16 @@ build-backend = "hatchling.build"
 [project]
 name = "guardmcp-proxy"
 version = "0.1.0"
-description = "GuardMCP guardmcp-proxy � placeholder"
+description = "GuardMCP proxy — MCP interception, pipeline, routing"
 requires-python = ">=3.11"
+dependencies = [
+    "guardmcp-core",
+    "guardmcp-policy",
+    "guardmcp-risk",
+    "guardmcp-budget",
+    "guardmcp-decision",
+    "guardmcp-audit",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/guardmcp_proxy"]
-
