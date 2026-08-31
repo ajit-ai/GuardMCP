@@ -90,7 +90,15 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["packages/guardmcp-core/src"]
+source = [
+    "packages/guardmcp-core/src",
+    "packages/guardmcp-errors/src",
+    "packages/guardmcp-policy/src",
+    "packages/guardmcp-risk/src",
+    "packages/guardmcp-budget/src",
+    "packages/guardmcp-decision/src",
+    "packages/guardmcp-audit/src",
+]
 branch = true
 
 [tool.coverage.report]
