@@ -1,11 +1,20 @@
-"""guardmcp-risk � placeholder for G0.
-
-Will be implemented in its dedicated phase (G2-G11).
-Domain dependency rule: must not import FastAPI, PostgreSQL,
-Redis, MCP transport, or OpenTelemetry directly.
-"""
+"""guardmcp-risk — deterministic, explainable risk engine."""
 
 from __future__ import annotations
 
+from guardmcp_risk.evaluator import RiskEvaluator
+from guardmcp_risk.models import RiskFactor, RiskResult, RiskScore, RiskSignal, RiskSignalCategory
+from guardmcp_risk.provider import RiskSignalProvider
+
 __version__ = "0.1.0"
-__all__ = ["__version__"]
+
+__all__ = [
+    "RiskEvaluator",
+    "RiskFactor",
+    "RiskResult",
+    "RiskScore",
+    "RiskSignal",
+    "RiskSignalCategory",
+    "RiskSignalProvider",
+    "__version__",
+]
