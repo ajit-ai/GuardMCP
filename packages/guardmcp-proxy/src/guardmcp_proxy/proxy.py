@@ -11,6 +11,7 @@ from guardmcp_audit.event import AuditEvent
 from guardmcp_core.types import GuardDecisionAction
 
 from guardmcp_proxy.context_builder import ContextBuilder
+from guardmcp_proxy.inspector import BasicResultInspector, InspectionAction, ResultInspector
 from guardmcp_proxy.pipeline import DecisionPipeline
 from guardmcp_proxy.router import MCPRouter
 
@@ -35,11 +36,13 @@ class GuardMCPProxy:
         router: MCPRouter | None = None,
         sink: InMemoryEventSink | None = None,
         context_builder: ContextBuilder | None = None,
+        inspector: ResultInspector | None = None,
     ) -> None:
         self._pipeline = pipeline or DecisionPipeline()
         self._router = router or MCPRouter()
         self._sink = sink or InMemoryEventSink()
         self._builder = context_builder or ContextBuilder()
+        self._inspector: ResultInspector = inspector or BasicResultInspector()
 
     @property
     def sink(self) -> InMemoryEventSink:
@@ -112,49 +115,82 @@ class GuardMCPProxy:
                 decision, context, allowed=False, status="approval_required"
             )
 
-        if decision.action in {GuardDecisionAction.RESTRICT, GuardDecisionAction.SANDBOX}:
-            # proceed but with restrictions
-            self._emit(
-                context, AuditEventType.TOOL_STARTED, {"tool": tool_name, "restricted": True}
-            )
-            try:
-                result = self._router.route(tool_name, context.request.arguments)
-                # 6. Inspect — basic redaction if needed
-                if decision.restrictions:
-                    result = {**result, "_restrictions": decision.restrictions}
-                self._emit(context, AuditEventType.TOOL_COMPLETED, {"tool": tool_name})
-                self._emit(context, AuditEventType.RESULT_INSPECTED, {"restricted": True})
-                self._emit(
-                    context,
-                    AuditEventType.REQUEST_COMPLETED,
-                    {"status": "completed_restricted"},
-                    duration_ms=self._elapsed(start),
-                )
-                return self._decision_response(decision, context, allowed=True, result=result)
-            except Exception as exc:
-                self._emit(context, AuditEventType.TOOL_FAILED, {"error": str(exc)})
-                self._emit(
-                    context,
-                    AuditEventType.REQUEST_COMPLETED,
-                    {"status": "failed"},
-                    duration_ms=self._elapsed(start),
-                )
-                return self._decision_response(decision, context, allowed=False, error=str(exc))
-
-        # ALLOW
-        self._emit(context, AuditEventType.TOOL_STARTED, {"tool": tool_name})
+        # 5. Execute permitted request — with post-execution inspection
+        is_restricted = decision.action in {
+            GuardDecisionAction.RESTRICT,
+            GuardDecisionAction.SANDBOX,
+        }
+        self._emit(
+            context,
+            AuditEventType.TOOL_STARTED,
+            {"tool": tool_name, "restricted": is_restricted},
+        )
         try:
-            result = self._router.route(tool_name, context.request.arguments)
+            raw_result = self._router.route(tool_name, context.request.arguments)
             self._emit(context, AuditEventType.TOOL_COMPLETED, {"tool": tool_name})
-            self._emit(context, AuditEventType.RESULT_INSPECTED, {})
+
+            # 6. Inspect result — G9 post-execution control
+            inspection = self._inspector.inspect(raw_result, context, decision)
+            self._emit(
+                context,
+                AuditEventType.RESULT_INSPECTED,
+                {"inspection": inspection.action.value, "reasons": inspection.reasons},
+            )
+
+            if inspection.action == InspectionAction.BLOCK:
+                self._emit(
+                    context,
+                    AuditEventType.REQUEST_COMPLETED,
+                    {"status": "blocked", "blocked_keys": inspection.blocked_keys},
+                    duration_ms=self._elapsed(start),
+                )
+                return self._decision_response(
+                    decision,
+                    context,
+                    allowed=False,
+                    error="blocked: " + "; ".join(inspection.reasons),
+                    status="blocked",
+                )
+
+            final_result: dict[str, Any] = inspection.result
+            # merge decision restrictions for restricted/sandbox
+            if decision.restrictions:
+                final_result = {**final_result, "_restrictions": decision.restrictions}
+            # budget finalize — consume on success
+            if budget_result is not None and getattr(budget_result, "reservation_id", None):
+                try:
+                    if (
+                        hasattr(self._pipeline, "_budget_svc")
+                        and self._pipeline._budget_svc is not None
+                    ):
+                        self._pipeline._budget_svc.consume(budget_result.reservation_id)
+                except Exception:
+                    pass
+
+            status = (
+                "completed_restricted"
+                if is_restricted or inspection.action == InspectionAction.REDACT
+                else "completed"
+            )
             self._emit(
                 context,
                 AuditEventType.REQUEST_COMPLETED,
-                {"status": "completed"},
+                {"status": status, "inspection": inspection.action.value},
                 duration_ms=self._elapsed(start),
             )
-            return self._decision_response(decision, context, allowed=True, result=result)
+            return self._decision_response(decision, context, allowed=True, result=final_result)
+
         except Exception as exc:
+            # budget finalize — release on failure
+            if budget_result is not None and getattr(budget_result, "reservation_id", None):
+                try:
+                    if (
+                        hasattr(self._pipeline, "_budget_svc")
+                        and self._pipeline._budget_svc is not None
+                    ):
+                        self._pipeline._budget_svc.release(budget_result.reservation_id)
+                except Exception:
+                    pass
             self._emit(context, AuditEventType.TOOL_FAILED, {"error": str(exc)})
             self._emit(
                 context,

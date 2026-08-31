@@ -41,7 +41,7 @@ guardmcp/
 
 See `docs/architecture/OVERVIEW.md` and `docs/adr/`.
 
-## Quick Start (G0-G8)
+## Quick Start (G0-G9)
 
 ```bash
 # install
@@ -66,7 +66,7 @@ Requires Python 3.11+.
 
 `G0` Repository Foundation → `G1` Core Domain → `G2` Errors → `G3` Policy → `G4` Risk → `G5` Budget → `G6` Decision → `G7` Audit → `G8` MCP Proxy → `G9` Post-Execution → `G10` Security Intelligence → `G11` Observability → `G12` Persistence → `G13` Hardening → `G14` DX → `G15` Release
 
-Current: **G8 complete** — `GuardMCPProxy` (intercept→context→policy→risk→budget→decision→router→audit), 4 decision outcomes tested, `examples/mcp-proxy/basic.py` runnable, 83 tests, mypy strict. Awaiting `Proceed to G9`.
+Current: **G9 complete** — `BasicResultInspector` (ALLOW/REDACT/BLOCK, `BasicRedactor` for sensitive keys, large output in RESTRICT), budget finalize, proxy integration, 90 tests, mypy strict. Awaiting `Proceed to G10`.
 
 ## Documentation
 
