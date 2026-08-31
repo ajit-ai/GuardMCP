@@ -1,11 +1,12 @@
-"""guardmcp-proxy � placeholder for G0.
-
-Will be implemented in its dedicated phase (G2-G11).
-Domain dependency rule: must not import FastAPI, PostgreSQL,
-Redis, MCP transport, or OpenTelemetry directly.
-"""
+"""guardmcp-proxy — MCP interception, context, decision pipeline, routing, audit."""
 
 from __future__ import annotations
 
+from guardmcp_proxy.context_builder import ContextBuilder
+from guardmcp_proxy.pipeline import DecisionPipeline
+from guardmcp_proxy.proxy import GuardMCPProxy
+from guardmcp_proxy.router import MCPRouter
+
 __version__ = "0.1.0"
-__all__ = ["__version__"]
+
+__all__ = ["ContextBuilder", "DecisionPipeline", "GuardMCPProxy", "MCPRouter", "__version__"]
