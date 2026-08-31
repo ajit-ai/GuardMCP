@@ -1,11 +1,9 @@
-"""guardmcp-decision � placeholder for G0.
-
-Will be implemented in its dedicated phase (G2-G11).
-Domain dependency rule: must not import FastAPI, PostgreSQL,
-Redis, MCP transport, or OpenTelemetry directly.
-"""
+"""guardmcp-decision — final authority decision engine."""
 
 from __future__ import annotations
 
+from guardmcp_decision.engine import DecisionEngine
+
 __version__ = "0.1.0"
-__all__ = ["__version__"]
+
+__all__ = ["DecisionEngine", "__version__"]

@@ -41,7 +41,7 @@ guardmcp/
 
 See `docs/architecture/OVERVIEW.md` and `docs/adr/`.
 
-## Quick Start (G0-G5)
+## Quick Start (G0-G6)
 
 ```bash
 # install
@@ -66,7 +66,7 @@ Requires Python 3.11+.
 
 `G0` Repository Foundation → `G1` Core Domain → `G2` Errors → `G3` Policy → `G4` Risk → `G5` Budget → `G6` Decision → `G7` Audit → `G8` MCP Proxy → `G9` Post-Execution → `G10` Security Intelligence → `G11` Observability → `G12` Persistence → `G13` Hardening → `G14` DX → `G15` Release
 
-Current: **G5 complete** — `BudgetService` with `CHECK/RESERVE/CONSUME/RELEASE/EXPIRE` over `InMemoryBudgetProvider` (thread-safe, 6 budget types, TTL), 50 unit tests, mypy strict, Redis-ready interface. Awaiting `Proceed to G6`.
+Current: **G6 complete** — `DecisionEngine` final authority with 8-step precedence (identity→delegation→policy deny→critical threat→budget→approval→high risk→allow), explainable `GuardDecision`, 62 unit tests, mypy strict. Awaiting `Proceed to G7`.
 
 ## Documentation
 

@@ -5,9 +5,9 @@ build-backend = "hatchling.build"
 [project]
 name = "guardmcp-decision"
 version = "0.1.0"
-description = "GuardMCP guardmcp-decision � placeholder"
+description = "GuardMCP decision engine — precedence, explainable"
 requires-python = ">=3.11"
+dependencies = ["guardmcp-core", "guardmcp-policy", "guardmcp-risk", "guardmcp-budget"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/guardmcp_decision"]
-
