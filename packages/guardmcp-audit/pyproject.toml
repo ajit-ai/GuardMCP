@@ -5,9 +5,9 @@ build-backend = "hatchling.build"
 [project]
 name = "guardmcp-audit"
 version = "0.1.0"
-description = "GuardMCP guardmcp-audit � placeholder"
+description = "GuardMCP audit — domain events, in-memory sink"
 requires-python = ">=3.11"
+dependencies = []
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/guardmcp_audit"]
-
