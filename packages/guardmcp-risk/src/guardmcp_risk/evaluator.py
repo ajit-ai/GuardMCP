@@ -151,12 +151,12 @@ class RiskEvaluator:
         elif "read" in tname:
             signals.append(
                 _new_signal(
-                    RiskSignalCategory.TOOL_RISK, 30, f"Read-only tool: {tname}", confidence=0.8
+                    RiskSignalCategory.TOOL_RISK, 20, f"Read-only tool: {tname}", confidence=0.8
                 )
             )
         else:
             signals.append(
-                _new_signal(RiskSignalCategory.TOOL_RISK, 25, f"Tool: {tname}", confidence=0.7)
+                _new_signal(RiskSignalCategory.TOOL_RISK, 15, f"Tool: {tname}", confidence=0.7)
             )
 
         # 5. ArgumentRisk
