@@ -47,7 +47,7 @@ extend-exclude = [".git", ".venv", "dist", "build", "__pycache__"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "C4", "UP", "SIM", "TCH", "TID", "RUF"]
-ignore = []
+ignore = ["TC001", "TC002", "TC003"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -68,7 +68,19 @@ exclude = ["\\.venv", "build", "dist"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["packages/guardmcp-core/src"]
+pythonpath = [
+    "packages/guardmcp-core/src",
+    "packages/guardmcp-context/src",
+    "packages/guardmcp-errors/src",
+    "packages/guardmcp-policy/src",
+    "packages/guardmcp-risk/src",
+    "packages/guardmcp-budget/src",
+    "packages/guardmcp-decision/src",
+    "packages/guardmcp-audit/src",
+    "packages/guardmcp-observability/src",
+    "packages/guardmcp-security/src",
+    "packages/guardmcp-proxy/src",
+]
 addopts = "-q --strict-markers --strict-config"
 markers = [
   "unit: unit tests",
